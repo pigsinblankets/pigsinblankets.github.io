@@ -42,7 +42,10 @@ Module['instantiateWasm'] = (info, receiveInstance) => {
   // Instantiate from the module posted from the main thread.
   // We can just use sync instantiation in the worker.
   var instance = new WebAssembly.Instance(Module['wasmModule'], info);
-  receiveInstance(instance, Module['wasmModule']);
+  // TODO: Due to Closure regression https://github.com/google/closure-compiler/issues/3193,
+  // the above line no longer optimizes out down to the following line.
+  // When the regression is fixed, we can remove this if/else.
+  receiveInstance(instance);
   // We don't need the module anymore; new threads will be spawned from the main thread.
   Module['wasmModule'] = null;
   return instance.exports;
@@ -54,8 +57,6 @@ self.onmessage = (e) => {
 
       // Module and memory were sent from main thread
       Module['wasmModule'] = e.data.wasmModule;
-
-      Module['dynamicLibraries'] = e.data.dynamicLibraries;
 
       Module['wasmMemory'] = e.data.wasmMemory;
 
